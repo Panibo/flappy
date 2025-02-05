@@ -6,19 +6,8 @@ body {
   height: 100%;
 }
 body {
-  background-image: url("/bg.jpg");
-  background-size: contain;
-  animation: moveBackground 10s linear infinite;
 }
 
-@keyframes moveBackground {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -100% 0;
-  }
-}
 canvas {
   display: block;
   margin: 0;

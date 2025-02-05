@@ -1,10 +1,17 @@
 import pipe from "../assets/pipe.png";
+import background from "../assets/bg.svg";
 
 const pipeImage = new Image();
 pipeImage.src = pipe;
 
+const bgImage = new Image();
+bgImage.src = background;
+
 pipeImage.onload = () => {
-  // Now you can use drawPlayer and drawObstacle
+  console.log("Image loaded");
+};
+
+bgImage.onload = () => {
   console.log("Image loaded");
 };
 
@@ -43,4 +50,18 @@ const drawObstacle = (ctx, x, gapPosition, gapSize, obstacleWidth) => {
   ctx.restore();
 };
 
-export default { drawPlayer, drawObstacle };
+const drawBackground = (ctx, canvas, x, bgWidth) => {
+  const bg = new Image();
+  bg.src = bg; // Ensure you're using your background image here
+
+  // Wait for the background image to load before drawing it
+  bg.onload = () => {
+    const aspectRatio = bg.width / bg.height;
+    bgWidth.current = canvas.height * aspectRatio; // Set the background width
+
+    // Draw the background as a repeating tile
+    ctx.drawImage(bg, x, 0, bgWidth.current, canvas.height);
+    ctx.drawImage(bg, x + bgWidth.current, 0, bgWidth.current, canvas.height);
+  };
+};
+export default { drawPlayer, drawObstacle, drawBackground };

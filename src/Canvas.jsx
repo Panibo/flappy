@@ -9,8 +9,11 @@ const Canvas = (props) => {
   const jumpImpulse = -10;
   const obstacles = useRef([]); // Array to store obstacles
   const obstacleSpeed = 3; // Speed at which obstacles move
+  const backgroundSpeed = 1; // Speed at which background moves (slower than obstacles)
   let timeScale = 1;
   const [score, setScore] = useState(0); // State to track the score
+  const backgroundX = useRef(0); // Initial position of the background
+  const bgWidth = useRef(0); // To store the width of the background image
 
   const handleLoseGame = () => {
     console.log("You lose!");
@@ -105,8 +108,25 @@ const Canvas = (props) => {
         obstacleSpawnTimer--;
       }
 
+      // Move the background slower than the obstacles
+      backgroundX.current -= backgroundSpeed * timeScale;
+
+      // Reset background position when it moves off screen
+      if (backgroundX.current <= -bgWidth.current) {
+        backgroundX.current = 0;
+      }
+
       // Clear canvas and redraw elements
       context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the background as multiple tiles
+      components.drawBackground(
+        context,
+        canvas,
+        backgroundX.current,
+        bgWidth.current
+      );
+
       components.drawPlayer(
         context,
         playerCoords.current.x,
@@ -122,7 +142,6 @@ const Canvas = (props) => {
           obstacleWidth
         )
       );
-
       animationFrameId = requestAnimationFrame(update);
     };
 
