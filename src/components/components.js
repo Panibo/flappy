@@ -1,25 +1,18 @@
 import pipe from "../assets/pipe.png";
 import background from "../assets/bg.svg";
+import juho from "../assets/flappyjuho.png";
 
 const pipeImage = new Image();
 pipeImage.src = pipe;
 
-const bgImage = new Image();
-bgImage.src = background;
+const bg = new Image();
+bg.src = background;
 
-pipeImage.onload = () => {
-  console.log("Image loaded");
-};
-
-bgImage.onload = () => {
-  console.log("Image loaded");
-};
+const juhoImage = new Image();
+juhoImage.src = juho;
 
 const drawPlayer = (ctx, x, y, playerSize) => {
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.rect(x, y, playerSize, playerSize);
-  ctx.fill();
+  ctx.drawImage(juhoImage, x, y, playerSize, playerSize);
 };
 
 const drawObstacle = (ctx, x, gapPosition, gapSize, obstacleWidth) => {
@@ -51,17 +44,7 @@ const drawObstacle = (ctx, x, gapPosition, gapSize, obstacleWidth) => {
 };
 
 const drawBackground = (ctx, canvas, x, bgWidth) => {
-  const bg = new Image();
-  bg.src = bg; // Ensure you're using your background image here
-
-  // Wait for the background image to load before drawing it
-  bg.onload = () => {
-    const aspectRatio = bg.width / bg.height;
-    bgWidth.current = canvas.height * aspectRatio; // Set the background width
-
-    // Draw the background as a repeating tile
-    ctx.drawImage(bg, x, 0, bgWidth.current, canvas.height);
-    ctx.drawImage(bg, x + bgWidth.current, 0, bgWidth.current, canvas.height);
-  };
+  // Draw the background as a repeating tile
+  ctx.drawImage(bg, x, 0, bgWidth, canvas.height);
 };
 export default { drawPlayer, drawObstacle, drawBackground };

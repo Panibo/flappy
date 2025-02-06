@@ -1,23 +1,31 @@
 import { useRef, useEffect, useState } from "react";
 import components from "./components/components";
+import Play from "./Play";
 
 const Canvas = (props) => {
   const canvasRef = useRef(null);
-  const playerCoords = useRef({ x: 100, y: 250 });
+  const playerCoords = useRef({ x: 150, y: -10000 });
   const velocity = useRef(0);
   const gravity = 0.5;
   const jumpImpulse = -10;
-  const obstacles = useRef([]); // Array to store obstacles
-  const obstacleSpeed = 3; // Speed at which obstacles move
-  const backgroundSpeed = 1; // Speed at which background moves (slower than obstacles)
-  let timeScale = 1;
-  const [score, setScore] = useState(0); // State to track the score
-  const backgroundX = useRef(0); // Initial position of the background
-  const bgWidth = useRef(0); // To store the width of the background image
+  const obstacles = useRef([]);
+  const obstacleSpeed = 3;
+  const timeScale = useRef(0);
+  const [score, setScore] = useState(0);
+  const [play, setPlay] = useState(true);
+  const defaultPlayerCoords = useRef();
+  const loseAudioRef = useRef(null);
+  const jumpAudioRef = useRef(null);
+  const isLost = useRef(false);
 
   const handleLoseGame = () => {
-    console.log("You lose!");
-    timeScale = 0;
+    if (!isLost.current) {
+      console.log("You lost!");
+      loseAudioRef.current.play();
+      timeScale.current = 0;
+      setPlay(true);
+      isLost.current = true;
+    }
   };
 
   const incrementScore = () => {
@@ -25,53 +33,48 @@ const Canvas = (props) => {
   };
 
   useEffect(() => {
-    console.log("Score updated:", score);
-  }, [score]);
-
-  useEffect(() => {
+    loseAudioRef.current = new Audio("/fail.wav");
+    jumpAudioRef.current = new Audio("/jump.mp3");
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     let animationFrameId;
-    let obstacleSpawnTimer = 0;
+    const playerSize = 0.1 * canvas.height;
+    playerCoords.current = { x: 250, y: 0.5 * canvas.height - playerSize / 2 };
+    defaultPlayerCoords.current = { ...playerCoords.current };
 
     const handleJump = () => {
       velocity.current = jumpImpulse;
+      jumpAudioRef.current.play();
     };
     window.addEventListener("click", handleJump);
 
     const update = () => {
-      const gapSize = 350;
-      const buffer = 100;
-      const obstacleWidth = 150;
-      const playerSize = 100;
+      const gapSize = 0.35 * canvas.height;
+      const buffer = 0.05 * canvas.height;
+      const obstacleWidth = 0.15 * canvas.height;
+      const minDistanceBetweenObstacles = 0.4 * canvas.width;
 
-      // Apply gravity and update player position
-      playerCoords.current.y += velocity.current * timeScale;
-      velocity.current += gravity * timeScale;
+      playerCoords.current.y += velocity.current * timeScale.current;
+      velocity.current += gravity * timeScale.current;
 
-      // Prevent player from falling below ground
       if (playerCoords.current.y >= canvas.height - playerSize) {
         playerCoords.current.y = canvas.height - playerSize;
         velocity.current = 0;
       }
 
-      // Move obstacles left
       obstacles.current = obstacles.current.map((obs) => ({
         ...obs,
-        x: obs.x - obstacleSpeed * timeScale,
+        x: obs.x - obstacleSpeed * timeScale.current,
       }));
 
-      // Remove obstacles that move off-screen
       obstacles.current = obstacles.current.filter(
         (obs) => obs.x + obstacleWidth > 0
       );
 
-      // Check for collision and score increment
       obstacles.current.forEach((obs) => {
         const playerX = playerCoords.current.x;
         const playerY = playerCoords.current.y;
 
-        // Check for collision
         if (
           playerX < obs.x + obstacleWidth &&
           playerX + playerSize > obs.x &&
@@ -79,54 +82,34 @@ const Canvas = (props) => {
             playerY + playerSize > obs.gapPosition + gapSize / 2)
         ) {
           handleLoseGame();
+
           return;
         }
 
-        // If player passes the pipe (crosses the obstacle x position)
         if (playerX > obs.x + obstacleWidth && !obs.passed) {
-          obs.passed = true; // Mark this pipe as passed
-          incrementScore(); // Increment score when passed
+          obs.passed = true;
+          incrementScore();
         }
       });
 
-      // Spawn new obstacles at intervals
-      if (obstacleSpawnTimer <= 0) {
+      if (
+        obstacles.current.length === 0 ||
+        canvas.width - obstacles.current[obstacles.current.length - 1].x >=
+          minDistanceBetweenObstacles
+      ) {
         const minGapPosition = buffer + gapSize / 2;
         const maxGapPosition = canvas.height - buffer - gapSize / 2;
-
         const gapPosition =
           Math.random() * (maxGapPosition - minGapPosition) + minGapPosition;
 
         obstacles.current.push({
           x: canvas.width,
           gapPosition: gapPosition,
-          passed: false, // Initial state, pipe hasn't been passed yet
+          passed: false,
         });
-
-        obstacleSpawnTimer = 200;
-      } else {
-        obstacleSpawnTimer--;
       }
 
-      // Move the background slower than the obstacles
-      backgroundX.current -= backgroundSpeed * timeScale;
-
-      // Reset background position when it moves off screen
-      if (backgroundX.current <= -bgWidth.current) {
-        backgroundX.current = 0;
-      }
-
-      // Clear canvas and redraw elements
       context.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw the background as multiple tiles
-      components.drawBackground(
-        context,
-        canvas,
-        backgroundX.current,
-        bgWidth.current
-      );
-
       components.drawPlayer(
         context,
         playerCoords.current.x,
@@ -153,9 +136,40 @@ const Canvas = (props) => {
       obstacles.current = [];
       window.removeEventListener("click", handleJump);
     };
-  }, []); // We add score to the dependency array so the score will trigger re-render when updated
+  }, []);
 
-  return <canvas ref={canvasRef} {...props} />;
+  useEffect(() => {
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, []);
+
+  return (
+    <div className="canvas-container">
+      <Play
+        timeScale={timeScale}
+        play={play}
+        setPlay={setPlay}
+        lastScore={score}
+        setScore={setScore}
+        playerCoords={playerCoords}
+        obstacles={obstacles}
+        defaultPlayerCoords={defaultPlayerCoords}
+        isLost={isLost}
+      />
+
+      <canvas ref={canvasRef} {...props} />
+    </div>
+  );
 };
 
 export default Canvas;
