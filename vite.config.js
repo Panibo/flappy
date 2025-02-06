@@ -7,5 +7,5 @@ export default defineConfig({
   build: {
     outDir: "docs",
   },
-  base: "https://panibo.gihtub.io/flappy/",
+  base: "https://panibo.github.io/flappy/",
 });
