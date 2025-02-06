@@ -41,7 +41,8 @@ const Canvas = (props) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     let animationFrameId;
-    const playerSize = 0.125 * canvas.height;
+    let playerSize = 0.125 * canvas.height;
+    console.log(playerSize);
     playerCoords.current = { x: 250, y: 0.5 * canvas.height - playerSize / 2 };
     defaultPlayerCoords.current = { ...playerCoords.current };
 
@@ -53,6 +54,7 @@ const Canvas = (props) => {
     window.addEventListener("click", handleJump);
 
     const update = () => {
+      playerSize = 0.125 * canvas.height;
       const gapSize = 0.35 * canvas.height;
       const buffer = 0.05 * canvas.height;
       const obstacleWidth = 0.15 * canvas.height;
