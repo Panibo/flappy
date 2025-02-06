@@ -41,7 +41,7 @@ const Canvas = (props) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     let animationFrameId;
-    const playerSize = 0.1 * canvas.height;
+    const playerSize = 0.125 * canvas.height;
     playerCoords.current = { x: 250, y: 0.5 * canvas.height - playerSize / 2 };
     defaultPlayerCoords.current = { ...playerCoords.current };
 
