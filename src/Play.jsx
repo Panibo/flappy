@@ -28,7 +28,7 @@ const Play = ({
   }, [lastScore]);
 
   useEffect(() => {
-    audioRef.current = new Audio("/music.mp3");
+    audioRef.current = new Audio("/flappy/music.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 0.2;
   }, []);

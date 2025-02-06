@@ -1,6 +1,6 @@
-import pipe from "../assets/pipe.png";
-import background from "../assets/bg.svg";
-import juho from "../assets/flappyjuho.png";
+import pipe from "/pipe.png";
+import background from "/bg.svg";
+import juho from "/flappyjuho.png";
 
 const pipeImage = new Image();
 pipeImage.src = pipe;

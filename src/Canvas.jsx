@@ -33,8 +33,11 @@ const Canvas = (props) => {
   };
 
   useEffect(() => {
-    loseAudioRef.current = new Audio("/fail.wav");
-    jumpAudioRef.current = new Audio("/jump.mp3");
+    loseAudioRef.current = new Audio("/flappy/fail.wav");
+    jumpAudioRef.current = new Audio("/flappy/jump.mp3");
+
+    loseAudioRef.current.volume = 0.5;
+    jumpAudioRef.current.volume = 0.5;
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     let animationFrameId;
@@ -43,6 +46,7 @@ const Canvas = (props) => {
     defaultPlayerCoords.current = { ...playerCoords.current };
 
     const handleJump = () => {
+      if (timeScale.current === 0) return;
       velocity.current = jumpImpulse;
       jumpAudioRef.current.play();
     };
