@@ -6,10 +6,10 @@ const Canvas = (props) => {
   const canvasRef = useRef(null);
   const playerCoords = useRef({ x: 150, y: -10000 });
   const velocity = useRef(0);
-  const gravity = 0.5;
-  const jumpImpulse = -10;
+  const gravity = 1000;
+  const jumpImpulse = -400;
   const obstacles = useRef([]);
-  const obstacleSpeed = 3;
+  const obstacleSpeed = 150;
   const timeScale = useRef(0);
   const [score, setScore] = useState(0);
   const [play, setPlay] = useState(true);
@@ -38,13 +38,28 @@ const Canvas = (props) => {
 
     loseAudioRef.current.volume = 0.5;
     jumpAudioRef.current.volume = 0.5;
+
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     let animationFrameId;
+    let lastTime = performance.now();
+    const fixedDeltaTime = 1 / 60; // Fixed timestep for physics (60Hz)
+    let accumulatedTime = 0;
+
     let playerSize = 0.125 * canvas.height;
-    console.log(playerSize);
-    playerCoords.current = { x: 250, y: 0.5 * canvas.height - playerSize / 2 };
+    playerCoords.current = {
+      x: 0.1 * canvas.width,
+      y: 0.5 * canvas.height - playerSize / 2,
+    };
     defaultPlayerCoords.current = { ...playerCoords.current };
+
+    const gapSize = 0.375 * canvas.height;
+    const buffer = 0.05 * canvas.height;
+    const obstacleWidth = 0.15 * canvas.height;
+    let isPortrait = window.innerHeight > window.innerWidth;
+    const minDistanceBetweenObstacles = isPortrait
+      ? 0.8 * canvas.width
+      : 0.4 * canvas.width;
 
     const handleJump = () => {
       if (timeScale.current === 0) return;
@@ -53,66 +68,72 @@ const Canvas = (props) => {
     };
     window.addEventListener("click", handleJump);
 
-    const update = () => {
-      playerSize = 0.125 * canvas.height;
-      const gapSize = 0.35 * canvas.height;
-      const buffer = 0.05 * canvas.height;
-      const obstacleWidth = 0.15 * canvas.height;
-      const minDistanceBetweenObstacles = 0.4 * canvas.width;
+    const update = (currentTime) => {
+      let deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      if (timeScale.current === 0) deltaTime = 0;
+      accumulatedTime += deltaTime;
 
-      playerCoords.current.y += velocity.current * timeScale.current;
-      velocity.current += gravity * timeScale.current;
+      if (timeScale.current > 0) {
+        while (accumulatedTime >= fixedDeltaTime) {
+          playerCoords.current.y +=
+            velocity.current * fixedDeltaTime * timeScale.current;
+          velocity.current += gravity * fixedDeltaTime * timeScale.current;
 
-      if (playerCoords.current.y >= canvas.height - playerSize) {
-        playerCoords.current.y = canvas.height - playerSize;
-        velocity.current = 0;
-      }
+          if (playerCoords.current.y >= canvas.height - playerSize) {
+            playerCoords.current.y = canvas.height - playerSize;
+            velocity.current = 0;
+          }
 
-      obstacles.current = obstacles.current.map((obs) => ({
-        ...obs,
-        x: obs.x - obstacleSpeed * timeScale.current,
-      }));
+          obstacles.current = obstacles.current.map((obs) => ({
+            ...obs,
+            x: obs.x - obstacleSpeed * fixedDeltaTime * timeScale.current,
+          }));
 
-      obstacles.current = obstacles.current.filter(
-        (obs) => obs.x + obstacleWidth > 0
-      );
+          obstacles.current = obstacles.current.filter(
+            (obs) => obs.x + obstacleWidth > 0
+          );
 
-      obstacles.current.forEach((obs) => {
-        const playerX = playerCoords.current.x;
-        const playerY = playerCoords.current.y;
+          obstacles.current.forEach((obs) => {
+            const playerX = playerCoords.current.x;
+            const playerY = playerCoords.current.y;
 
-        if (
-          playerX < obs.x + obstacleWidth &&
-          playerX + playerSize > obs.x &&
-          (playerY < obs.gapPosition - gapSize / 2 ||
-            playerY + playerSize > obs.gapPosition + gapSize / 2)
-        ) {
-          handleLoseGame();
+            if (
+              playerX < obs.x + obstacleWidth &&
+              playerX + playerSize > obs.x &&
+              (playerY < obs.gapPosition - gapSize / 2 ||
+                playerY + playerSize > obs.gapPosition + gapSize / 2)
+            ) {
+              handleLoseGame();
+              return;
+            }
 
-          return;
+            if (playerX > obs.x + obstacleWidth && !obs.passed) {
+              obs.passed = true;
+              incrementScore();
+            }
+          });
+
+          if (
+            obstacles.current.length === 0 ||
+            canvas.width - obstacles.current[obstacles.current.length - 1].x >=
+              minDistanceBetweenObstacles
+          ) {
+            const minGapPosition = buffer + gapSize / 2;
+            const maxGapPosition = canvas.height - buffer - gapSize / 2;
+            const gapPosition =
+              Math.random() * (maxGapPosition - minGapPosition) +
+              minGapPosition;
+
+            obstacles.current.push({
+              x: canvas.width,
+              gapPosition: gapPosition,
+              passed: false,
+            });
+          }
+
+          accumulatedTime -= fixedDeltaTime;
         }
-
-        if (playerX > obs.x + obstacleWidth && !obs.passed) {
-          obs.passed = true;
-          incrementScore();
-        }
-      });
-
-      if (
-        obstacles.current.length === 0 ||
-        canvas.width - obstacles.current[obstacles.current.length - 1].x >=
-          minDistanceBetweenObstacles
-      ) {
-        const minGapPosition = buffer + gapSize / 2;
-        const maxGapPosition = canvas.height - buffer - gapSize / 2;
-        const gapPosition =
-          Math.random() * (maxGapPosition - minGapPosition) + minGapPosition;
-
-        obstacles.current.push({
-          x: canvas.width,
-          gapPosition: gapPosition,
-          passed: false,
-        });
       }
 
       context.clearRect(0, 0, canvas.width, canvas.height);
@@ -131,10 +152,11 @@ const Canvas = (props) => {
           obstacleWidth
         )
       );
+
       animationFrameId = requestAnimationFrame(update);
     };
 
-    update();
+    animationFrameId = requestAnimationFrame(update);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -161,6 +183,7 @@ const Canvas = (props) => {
 
   return (
     <div className="canvas-container">
+      <p className="score">{score}</p>
       <Play
         timeScale={timeScale}
         play={play}

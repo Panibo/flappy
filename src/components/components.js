@@ -12,7 +12,7 @@ const juhoImage = new Image();
 juhoImage.src = juho;
 
 const drawPlayer = (ctx, x, y, playerSize) => {
-  ctx.drawImage(juhoImage, x, y, playerSize, playerSize);
+  ctx.drawImage(juhoImage, x, y, playerSize * 1.2, playerSize * 1.2);
 };
 
 const drawObstacle = (ctx, x, gapPosition, gapSize, obstacleWidth) => {
