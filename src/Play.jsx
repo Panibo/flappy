@@ -34,7 +34,13 @@ const Play = ({
   }, []);
 
   const handlePlay = () => {
-    playerCoords.current = defaultPlayerCoords.current;
+    playerCoords.current = { ...defaultPlayerCoords.current };
+    console.log(
+      "Setting player coords to",
+      defaultPlayerCoords.current,
+      "original coords",
+      playerCoords.current
+    );
     obstacles.current = [];
 
     setPlay(false);

@@ -51,7 +51,9 @@ const Canvas = (props) => {
       x: 0.1 * canvas.width,
       y: 0.5 * canvas.height - playerSize / 2,
     };
-    defaultPlayerCoords.current = { ...playerCoords.current };
+    if (!defaultPlayerCoords.current) {
+      defaultPlayerCoords.current = { ...playerCoords.current };
+    }
 
     let gapSize = 0.375 * canvas.height;
     let buffer = 0.05 * canvas.height;
@@ -67,7 +69,6 @@ const Canvas = (props) => {
       jumpAudioRef.current.play();
     };
     window.addEventListener("click", handleJump);
-
     const update = (currentTime) => {
       playerSize = 0.125 * canvas.height;
       gapSize = 0.375 * canvas.height;
