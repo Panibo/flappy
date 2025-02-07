@@ -53,11 +53,11 @@ const Canvas = (props) => {
     };
     defaultPlayerCoords.current = { ...playerCoords.current };
 
-    const gapSize = 0.375 * canvas.height;
-    const buffer = 0.05 * canvas.height;
-    const obstacleWidth = 0.15 * canvas.height;
+    let gapSize = 0.375 * canvas.height;
+    let buffer = 0.05 * canvas.height;
+    let obstacleWidth = 0.15 * canvas.height;
     let isPortrait = window.innerHeight > window.innerWidth;
-    const minDistanceBetweenObstacles = isPortrait
+    let minDistanceBetweenObstacles = isPortrait
       ? 0.8 * canvas.width
       : 0.4 * canvas.width;
 
@@ -69,6 +69,15 @@ const Canvas = (props) => {
     window.addEventListener("click", handleJump);
 
     const update = (currentTime) => {
+      playerSize = 0.125 * canvas.height;
+      gapSize = 0.375 * canvas.height;
+      buffer = 0.05 * canvas.height;
+      obstacleWidth = 0.15 * canvas.height;
+      isPortrait = window.innerHeight > window.innerWidth;
+      minDistanceBetweenObstacles = isPortrait
+        ? 0.8 * canvas.width
+        : 0.4 * canvas.width;
+
       let deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
       if (timeScale.current === 0) deltaTime = 0;
